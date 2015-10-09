@@ -13,8 +13,7 @@ exam using the following method:
 
 For example, if a class of 20 students has the following scores:
 
-    99, 92, 91, 91, 89, 85, 83, 82, 80, 79, 78, 78, 77, 76, 75, 74, 62, 55, 43,
-    20
+    99, 92, 91, 91, 89, 85, 83, 82, 80, 79, 78, 78, 77, 76, 75, 74, 62, 55, 43, 20
 
 The first four scores (99, 92, 91, 91) would be an A, scores 5 through 8 (89,
 85, 83, 82) would be a B, scores 9 through 12 (80, 79, 78, 78) would be a C,
