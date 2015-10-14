@@ -1,11 +1,30 @@
-/*
-    The grade buckets defined in the configuration should be ordered from
-    highest grade value, to lowest grade value. Otherwise changing the
-    rounding configuration breaks.
-*/
-var config = {
-    buckets: ['A', 'B', 'C', 'D', 'F'],
-    rounding: 'floor' // Floor | Ceiling
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive)
+ * Using Math.round() will give you a non-uniform distribution!
+ */
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/* Generate array of random numbers for our test */
+function generateScores(amount) {
+    var arr = [];
+
+    while (arr.length < amount) {
+        var randomNumber = Math.ceil(Math.random() * 100);
+        var found = false;
+
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] == randomNumber) {
+                found = true;
+                break
+            }
+        }
+
+        if (!found) arr[arr.length] = randomNumber;
+    }
+
+    return arr;
 }
 
 /* Determine if an integer passed into the function is a numerical value */
@@ -30,10 +49,8 @@ function findDuplicates(sortedList) {
 }
 
 /* Remove duplicates from an array, do not store them */
-function removeDuplicates(a) {
-    return a.sort().filter(function(item, pos, ary) {
-        return !pos || item != ary[pos - 1];
-    })
+function removeDuplicates(arr) {
+    return arr.filter (function (v, i, a) { return a.indexOf (v) == i });
 }
 
 /* Populate an array with a value, a set amount of times */
@@ -71,38 +88,38 @@ function traditionalParse(unsortedList) {
     var parsedGrades = [];
 
     // Iterate through the list of scores
-    for (index = 0; index < unsortedList.length; ++index) {
+    for (var index = 0; index < sortedList.length; ++index) {
 
         // Verify we are dealing with a numerical value
-        if (!isNumber(unsortedList[index])) {
+        if (!isNumber(sortedList[index])) {
             console.log("Numeric value not provided in grade list.");
             return false;
         }
 
         // Parse which grade the score associates to
-        if (unsortedList[index] >= 90) {
+        if (sortedList[index] >= 90) {
             parsedGrades.push({
-                score: unsortedList[index],
+                score: sortedList[index],
                 grade: "A"
             });
         } else if (unsortedList[index] >= 80) {
             parsedGrades.push({
-                score: unsortedList[index],
+                score: sortedList[index],
                 grade: "B"
             });
         } else if (unsortedList[index] >= 70) {
             parsedGrades.push({
-                score: unsortedList[index],
+                score: sortedList[index],
                 grade: "C"
             });
         } else if (unsortedList[index] >= 60) {
             parsedGrades.push({
-                score: unsortedList[index],
+                score: sortedList[index],
                 grade: "D"
             });
         } else {
             parsedGrades.push({
-                score: unsortedList[index],
+                score: sortedList[index],
                 grade: "F"
             });
         }
@@ -122,11 +139,10 @@ function traditionalParse(unsortedList) {
     Simply put: "Ceiling" configuration results in larger number of higher grades, while
     the "floor" configuration results in a larger number of lower grades.
 */
-function performanceParse(unsortedList) {
+function relativeParse(unsortedList) {
     // Determine if performance or traditional grading would be more appropriate
-    if (unsortedList.length() < config.buckets.length()) {
-        console.log("Score list contains less than 5 values making a relative-performance
-            based grade parsing system pointless. Reverting to a traditional parsing method.")
+    if (unsortedList.length < config.buckets.length) {
+        console.log("Score list contains less than 5 values making a relative-performance based grade parsing system pointless. Reverting to a traditional parsing method.");
         return traditionalParse(unsortedList);
     }
 
@@ -134,19 +150,29 @@ function performanceParse(unsortedList) {
     var sortedList = sort(unsortedList);                                    // Sort the list we are parsing
     var parsedGrades = [];                                                  // Initialize the parsed grades array to be returned
     var duplicateScores = sort(findDuplicates(sortedList));                 // Check for duplicates and store them if found, sort again just because
-    if (duplicateScores.length > 0) { removeDuplicates(sortedList); }       // Now that they've been stored, remove them
+
+    // Now that they've been stored, remove them
+    if (duplicateScores.length > 0) {
+        sortedList = removeDuplicates(sortedList);
+        if (config.debugging == true) console.log("Duplicates Removed: " + sortedList);
+
+        // Check if score list length is greater than number of grade buckets after removing duplicates. If so revert to traditional.
+        if (sortedList.length < config.buckets.length) {
+            console.log("Score list contains less than 5 values making a relative-performance based grade parsing system pointless. Reverting to a traditional parsing method.");
+            return traditionalParse(unsortedList);
+        }
+    }
 
     // Calculate at which points the score list will be broken
-    var divNum = (floor(sortedList.length() / config.buckets.length()));    // Divide the number of items by number of buckets, remove remainder
-    var modNum = (sortedList.length % config.buckets.length());             // Determine the remainder of the previous division
+    var divNum = (Math.floor(sortedList.length / config.buckets.length));    // Divide the number of items by number of buckets, remove remainder
+    var modNum = (sortedList.length % config.buckets.length);             // Determine the remainder of the previous division
 
     // Generate the buckets in which the scores will be placed
-    var gradeBuckets = fillArray(divNum, config.buckets.length());          // Should be equal to the number of buckets defined in configuration
+    var gradeBuckets = fillArray(divNum, config.buckets.length);          // Should be equal to the number of buckets defined in configuration
 
     // Check bucket lengths
-    if (gradeBuckets.length != config.buckets.length()) {
-        console.log("Number of buckets generated is not the same as the number of buckets defined in
-            the config. Continuing the algorithm will not accomplish the desired result. Exiting.")
+    if (gradeBuckets.length != config.buckets.length) {
+        console.log("Number of buckets generated is not the same as the number of buckets defined in the config. Continuing the algorithm will not accomplish the desired result. Exiting.");
         return;
     }
 
@@ -165,7 +191,7 @@ function performanceParse(unsortedList) {
         }
 
         /*
-            Two options here, to either be generous and distrubute the grades in the case of a
+            Two options here, to either be generous and distribute the grades in the case of a
             score needing to be rounded between two grades so that it gets pushed up to the higher
             grade, or pushed down to the lower grade. Simply reversing the array distributes the grades
             on the D, F grade side of the bucket.
@@ -177,14 +203,26 @@ function performanceParse(unsortedList) {
     }
 
     /*
-        Check if the sum of all the values in the gradeBucket array equals the original number
-        of items in the unsortedList argument fed into the function. These two numbers should still
-        be equal even if there are duplicates in the original unsortedArray due to the fact that they
-        are removed from the sortedArray and placed into a separate array before bucket generation happens.
+        Print important information for troubleshooting and debugging.
     */
-    if (unsortedList.length != sumArray(gradeBuckets)) {
+    if (config.debugging == true) {
+        console.log("\n// ------------------------------------------");
+        console.log("// Modulo Number (Remainder):       " + modNum);
+        console.log("// Division Number (Bucket Size):   " + divNum);
+        console.log("// Grade Buckets (Array):           " + gradeBuckets);
+        console.log("// Bucket Summation:                " + sumArray(gradeBuckets));
+        console.log("// List Size:                       " + unsortedList.length);
+        console.log("// Duplicate Scores:                " + duplicateScores.length);
+        console.log("// ------------------------------------------\n");
+    }
+
+    /*
+        Check if the sum of all the values in the gradeBucket array plus duplicates equals the original number
+        of items in the unsortedList argument fed into the function.
+    */
+    if (unsortedList.length != (sumArray(gradeBuckets) + duplicateScores.length)) {
         console.log("There was an error calculating the size of each grade bucket.");
-        return;
+        return false;
     }
 
     /*
@@ -192,7 +230,16 @@ function performanceParse(unsortedList) {
     */
     var bucketPointer = 0;          // Determines current bucket you are traversing over
     var bucketCounter = 0;          // Counter to determine how many scores to place in each bucket
-    for (index = 0; index < sortedList.length; ++index) {
+    for (var index = 0; index < sortedList.length; ++index) {
+
+        /*
+            Print important information as the algorithm parses the scores to grades
+        */
+        if (config.debugging == true) {
+            console.log("\nIteration #" + (index + 1) + " on score of " + sortedList[index]);
+            console.log("Pointer: " + bucketPointer);
+            console.log("Counter: " + bucketCounter);
+        }
 
         /*
             If the counter exceeds the bucket max values to be assigned to it, then
@@ -208,7 +255,7 @@ function performanceParse(unsortedList) {
         /*
             Checks if the current score being parsed exists within the duplicate score array. In
             the event that it does, add that value to the parsedGrades array with the same letter
-            grade that the current score was set to receieve, and remove that value from the duplicateScore
+            grade that the current score was set to receive, and remove that value from the duplicateScore
             array. The reason this works is because the duplicateScores array is sorted in the same ascending
             or descending order that the sortedList is. A score in duplicateScores must also exist in sortedList.
         */
@@ -229,7 +276,58 @@ function performanceParse(unsortedList) {
             score: sortedList[index],                   // The score we are parsing in the sortedList
             grade: config.buckets[bucketPointer]        // The letter value associated with the bucket we are within
         });
+
+        bucketCounter++;
     }
 
     return parsedGrades;
 }
+
+/*
+ The grade buckets defined in the configuration should be ordered from
+ highest grade value, to lowest grade value. Otherwise changing the
+ rounding configuration breaks.
+ */
+var config = {
+    buckets: ['A', 'B', 'C', 'D', 'F'],
+    rounding: 'ceiling', // Floor | Ceiling
+    debugging: false
+};
+
+function main() {
+    console.log("// ------------------------------------");
+    console.log("// Beginning grade parsing algorithm...");
+    console.log("// ------------------------------------");
+
+    console.log("\n\n\n//////////// RANDOMIZED CASES ////////////");
+    console.log("\nNumber of scores we will be generating: ");
+    var amount = getRandomInt(5, 30); // Generate the amount of values to generate
+    console.log(amount);
+
+    console.log("\nArray of scores generated to be input to the algorithm: ");
+    var input = generateScores(amount);
+    console.log(JSON.stringify(input)); // Only using stringify to get output on one line
+
+    console.log("\nLet's look at what a tradition parse would do to these scores: ");
+    var traditionalGrades = traditionalParse(input);
+    console.log(traditionalGrades);
+
+    console.log("\nLet's look at what a relative performance parse would do to these scores: ");
+    var relativeGrades = relativeParse(input);
+    console.log(relativeGrades);
+
+
+    console.log("\n\n\n//////////// EDGE CASES ////////////");
+    var edgeCases = [
+        [100, 100, 100, 100, 100, 100, 100],
+        [100, 100, 90, 90, 90, 80, 70, 70, 60, 60],
+        [77, 77, 77, 77, 77, 77, 43, 23, 75, 12, 46, 75, 23, 66]
+    ];
+
+    for (var index = 0; index < edgeCases.length; ++index) {
+        console.log("\nEdge Case #" + (index + 1));
+        console.log(relativeParse(edgeCases[index]));
+    }
+}
+
+main();
